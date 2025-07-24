@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: rgb(0, 0, 0);
+      }
+
+      header {
+        background-color: rgb(0, 0, 0);
+        color: rgb(0, 0, 0);
+        padding: 10px;
+        text-align: center;
+        border-radius: 26px;
+      }
+
+      #messages div {
+        margin-bottom: 6px;
+        padding: 5px;
+        background-color: rgb(31, 31, 31);
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        color: white;
+      }
+
+      #messages div.my-message {
+        background-color: #2a9df4;
+        color: white;
+      }
+
+      input[type="text"] {
+        border: 3px solid rgb(31, 31, 31);
+        border-radius: 4px;
+        background-color: rgb(31, 31, 31);
+        color: white;
+      }
+
+      button {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #357ab7;
+      }
+
+      input[type="password"] {
+        background-color: rgb(0, 0, 0);
+        color: white;
+        border: none;
+      }
+
+      #sidebar {
+        width: 200px;
+        min-width: 200px;
+        margin-top: 0;
+        padding: 10px;
+        list-style: none;
+        background-color: #111;
+        display: block;
+        height: 100vh;
+        overflow-y: auto;
+        float: left;
+      }
+      #sidebar ul {
+        display: block;
+        padding: 0;
+        margin: 0;
+      }
+      #sidebar ul li {
+        margin-bottom: 0;
+      }
+
+      #sidebar ul li a {
+        display: block;
+        background-color: rgb(0, 0, 0);
+        color: #fff;
+        padding: 8px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-bottom: 6px;
+      }
+
+      #sidebar ul li a:hover {
+        background-color: #333;
+      }
+
+      #sidebar ul li a.active {
+        background-color: #2a9df4;
+        color: white;
+      }
+      #auth-buttons button {
+        padding: 6px 12px;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #auth-buttons button:hover {
+        background-color: rgb(0, 0, 0);
+      }
+      #register-form button:hover,
+      #login-form button:hover {
+        background-color: rgb(0, 0, 0);
+      }
+    </style>
+    <style>
+      #register-form {
+        display: none !important;
+      }
+    </style>
+
+    <meta charset="UTF-8" />
+    <title>Форум в реальном времени</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 10px;
+          align-items: center;
+        "
+      >
+        <input
+          type="text"
+          id="username"
+          placeholder="Имя пользователя"
+          style="padding: 6px; border-radius: 4px; border: 1px solid #ccc"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Пароль"
+          style="padding: 6px; border-radius: 4px; border: 1px solid #ccc"
+        />
+        <div id="auth-buttons" style="display: flex; gap: 10px">
+          <button id="login-button">Войти</button>
+          <button id="register-button">Регистрация</button>
+          <button onclick="hideAuthForms()">Отмена</button>
+        </div>
+      </div>
+    </header>
+
+    <main style="display: flex">
+      <!-- Блок для отображения информации о вошедшем пользователе -->
+      <div
+        id="user-info"
+        style="
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          background-color: #4a90e2;
+          color: white;
+          padding: 6px 12px;
+          border-radius: 8px;
+          display: none; /* Скрыт по умолчанию */
+          align-items: center;
+          gap: 10px;
+          font-weight: bold;
+          cursor: default;
+        "
+      >
+        Вы вошли как: <span id="user-name"></span>
+        <button
+          id="logout-button"
+          style="
+            margin-left: 10px;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: normal;
+          "
+        >
+          Выйти
+        </button>
+      </div>
+      <div id="register-form" style="display: none; margin-bottom: 20px">
+        <input type="text" id="reg-username" placeholder="Имя пользователя" />
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+          "
+        >
+          <input type="password" id="reg-password" placeholder="Пароль" />
+          <button onclick="submitRegister()">Зарегистрироваться</button>
+        </div>
+      </div>
+      <div id="login-form" style="display: none; margin-bottom: 20px">
+        <input type="text" id="username" placeholder="Имя пользователя" />
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+          "
+        >
+          <input type="password" id="password" placeholder="Пароль" />
+          <button onclick="submitLogin()">Войти</button>
+        </div>
+      </div>
+
+      <aside id="sidebar">
+        <h3 style="color: white">Ветки</h3>
+        <ul style="list-style: none; padding: 0"></ul>
+        <div style="margin-top: 20px">
+          <input
+            type="text"
+            id="new-thread-name"
+            placeholder="Название ветки"
+            style="padding: 5px; width: 100%"
+          />
+          <button onclick="createThread()" style="margin-top: 6px; width: 100%">
+            Создать ветку
+          </button>
+        </div>
+      </aside>
+      <div style="flex-grow: 1; padding: 20px">
+        <section id="messages-container">
+          <div
+            id="messages"
+            style="
+              border: 3px solid rgb(31, 31, 31);
+              height: 200px;
+              overflow-y: auto;
+              padding: 8px;
+              background-color: rgb(31, 31, 31);
+              border-radius: 24px;
+            "
+          ></div>
+        </section>
+
+        <section id="form-container" style="margin-top: 10px">
+          <input
+            type="text"
+            id="input"
+            placeholder="Введите сообщение..."
+            style="width: 70%; padding: 5px"
+          />
+          <button onclick="sendMessage()" style="padding: 5px 10px">
+            Отправить
+          </button>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      // При загрузке страницы проверяем, есть ли сохранённый пользователь и токен, и показываем информацию о пользователе
+      window.onload = () => {
+        const savedUsername = localStorage.getItem("username");
+        const savedToken = localStorage.getItem("token");
+        if (savedUsername && savedToken) {
+          showUserInfo(savedUsername);
+        }
+        // loadThreads() больше не выделяет активную ветку автоматически
+        loadThreads();
+        // Если есть параметр thread в URL, присоединяемся к этой ветке
+        const urlParams = new URLSearchParams(window.location.search);
+        threadId = urlParams.get("thread") || null;
+      };
+
+      // Отключаем переходы по ссылкам веток и всегда используем threadId = "1"
+      // document.querySelectorAll('#sidebar ul li a').forEach(link => {
+      //   if (link.getAttribute('href') && link.getAttribute('href').startsWith('?thread=')) {
+      //     link.setAttribute('href', '#');
+      //   }
+      // });
+      let threadId = null;
+
+      let links = document.querySelectorAll("#sidebar ul li a");
+
+      function joinThread(newThreadId) {
+        if (threadId === newThreadId) return;
+
+        connection.invoke("LeaveThread", threadId).catch(() => {});
+
+        threadId = newThreadId;
+
+        const messagesDiv = document.getElementById("messages");
+        // Очищаем интерфейс сообщений перед загрузкой новой ветки
+        messagesDiv.innerHTML = "";
+
+        // Загружаем историю сообщений из API
+        fetch(`${baseUrl}/api/posts/thread/${newThreadId}`, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        })
+          .then((res) => res.json())
+          .then((posts) => {
+            posts.forEach((post) => {
+              const div = document.createElement("div");
+              div.textContent = `${post.username}: ${post.content}`;
+              div.style.color = "white";
+              messagesDiv.appendChild(div);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          });
+
+        connection.invoke("JoinThread", threadId).catch(console.error);
+
+        links.forEach((link) => {
+          const hrefThread = link.getAttribute("href").replace("?thread=", "");
+          if (hrefThread === threadId) {
+            link.classList.add("active");
+          } else {
+            link.classList.remove("active");
+          }
+        });
+      }
+
+      // // Изначально выставляем активный класс для первой ветки
+      // links.forEach(link => {
+      //   const href = link.getAttribute('href');
+      //   const hrefThread = href && href.startsWith('?thread=') ? href.replace('?thread=', '') : null;
+      //   if (hrefThread === threadId) {
+      //     link.classList.add('active');
+      //   }
+      // });
+
+      links.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const href = link.getAttribute("href");
+          if (href && href.startsWith("?thread=")) {
+            const newThreadId = href.replace("?thread=", "");
+            joinThread(newThreadId);
+          }
+        });
+      });
+
+      const baseUrl = window.location.origin;
+
+      function createThread() {
+        const threadNameInput = document.getElementById("new-thread-name");
+        const title = threadNameInput.value.trim();
+        if (!title) return alert("Введите название ветки");
+
+        fetch(`${baseUrl}/api/threads`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          body: JSON.stringify({ title }),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Ошибка при создании ветки");
+            }
+            return res.json();
+          })
+          .then(() => {
+            threadNameInput.value = "";
+            loadThreads(); // обновим список веток
+          })
+          .catch((err) => {
+            console.error("Ошибка создания ветки:", err);
+            alert("Ошибка при создании ветки");
+          });
+      }
+
+      function loadThreads() {
+        //  loadThreads запрашивает у сервера список всех веток, которые сохранены в базе данных.
+        const token = localStorage.getItem("token");
+        fetch(`${baseUrl}/api/threads`, {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Ошибка загрузки веток");
+            return res.json();
+          })
+          .then((threads) => {
+            const ul = document.querySelector("#sidebar ul");
+            ul.innerHTML = ""; // очистить текущий список
+            threads.forEach((thread) => {
+              const li = document.createElement("li");
+              li.id = `branch-${thread.id}`;
+              const a = document.createElement("a");
+              a.href = `?thread=${thread.id}`;
+              a.textContent = thread.title;
+              a.dataset.originalTitle = thread.title;
+              a.addEventListener("click", (e) => {
+                e.preventDefault();
+                joinThread(thread.id.toString());
+              });
+              li.appendChild(a);
+              ul.appendChild(li);
+            });
+            // Обновляем ссылки
+            links = document.querySelectorAll("#sidebar ul li a");
+          })
+          .catch((err) => {
+            console.error(err);
+            alert("Не удалось загрузить ветки");
+          });
+      }
+
+      const connection = new signalR.HubConnectionBuilder() //Эта строка создаёт “канал связи” между браузером и сервером.
+        .withUrl(`${baseUrl}/forumHub`)
+        .build();
+
+      //============>   У каждого подключённого клиента заранее настроен приём события:
+      connection.on("ReceivePost", (post) => {
+        const currentUser = localStorage.getItem("username");
+        const isMyMessage = post.author === currentUser;
+        const msg = `${post.author}: ${post.content}`;
+        const div = document.getElementById("messages");
+
+        const messageDiv = document.createElement("div");
+        if (isMyMessage) {
+          messageDiv.classList.add("my-message");
+        }
+        messageDiv.textContent = msg;
+
+        div.appendChild(messageDiv);
+        div.scrollTop = div.scrollHeight;
+      });
+
+      // Обработчик события обновления количества пользователей в ветке
+      connection.on("UpdateUserCount", (threadIdUpdated, userCount) => {
+        const link = document.querySelector(`#branch-${threadIdUpdated} a`);
+        if (link && link.dataset.originalTitle === undefined) {
+          link.dataset.originalTitle = link.textContent;
+        }
+        if (link) {
+          const original = link.dataset.originalTitle;
+          link.textContent = `${original} - ${userCount}`;
+        }
+      });
+
+      connection //Когда ты вызываешь connection.start(), браузер открывает WebSocket, подключается к /forumHub — твой ForumHub.cs в C#
+        .start()
+        .then(() => {
+          if (threadId) {
+            connection.invoke("JoinThread", threadId);
+          }
+        })
+        .catch((err) => {
+          console.error("Ошибка подключения SignalR:", err);
+        });
+
+      // Этот метод отправляет сообщение на сервер
+      // Он вызывается, когда пользователь нажимает кнопку "Отправить"
+      // Он берёт текст из input с id "input" и отправляет его на сервер
+      // Сервер затем отправляет это сообщение всем подключённым клиентам в этой ветке
+      // Таким образом, все клиенты, подключённые к этой ветке, получают новое сообщение
+      // И это сообщение отображается в div с id "messages"
+      //======
+      function sendMessage() {
+        const content = document.getElementById("input").value; // Этот метод отправляет сообщение на сервер
+        fetch(`${baseUrl}/api/posts/thread/${threadId}`, {
+          // Этот метод отправляет сообщение на сервер
+          // fetch - прямо указывает путь на контроллер.
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token"), //берем токен из localStorage
+          },
+          body: JSON.stringify({ content }),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              alert("Ошибка отправки. Проверь токен и ID темы.");
+              console.error("Ошибка POST запроса:", res);
+            } else {
+              document.getElementById("input").value = "";
+            }
+          })
+          .catch((err) => {
+            console.error("Ошибка при отправке запроса:", err);
+          });
+      }
+
+      // Этот код добавляет обработчики событий для кнопок "Войти" и "Регистрация"
+      document
+        .getElementById("login-button")
+        .addEventListener("click", submitLogin);
+      document
+        .getElementById("register-button")
+        .addEventListener("click", register);
+
+      // Функции для обработки кликов по кнопкам "Войти" и "Регистрация"
+      // Они просто показывают окно с формой входа или регистрации
+
+      function register() {
+        window.location.href = "register.html";
+      }
+      // Функция для отображения блока с именем пользователя и скрытия кнопок входа/регистрации
+      function showUserInfo(username) {
+        document.getElementById("user-name").textContent = username;
+        document.getElementById("user-info").style.display = "flex";
+        document.getElementById("auth-buttons").style.display = "none";
+
+        // Скрываем поля логина и пароля в шапке
+        document.getElementById("username").style.display = "none";
+        document.getElementById("password").style.display = "none";
+      }
+
+      // Функция для скрытия блока с именем пользователя и показа кнопок входа/регистрации
+      // Также очищает localStorage от токена и имени пользователя
+      function hideUserInfo() {
+        document.getElementById("user-name").textContent = "";
+        document.getElementById("user-info").style.display = "none";
+        document.getElementById("auth-buttons").style.display = "flex";
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+
+        // Показываем поля логина и пароля в шапке
+        document.getElementById("username").style.display = "inline-block";
+        document.getElementById("password").style.display = "inline-block";
+      }
+
+      function submitLogin() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const baseUrl = window.location.origin;
+
+        fetch(`${baseUrl}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.token) {
+              localStorage.setItem("username", username);
+              localStorage.setItem("token", data.token);
+              showUserInfo(username);
+              alert("Вы вошли!");
+            } else {
+              alert("Ошибка входа");
+            }
+          })
+          .catch((err) => {
+            console.error("Ошибка авторизации:", err);
+            alert("Ошибка авторизации");
+          });
+      }
+      // Показывает форму входа
+      // Эта функция вызывается, когда пользователь нажимает кнопку "Войти"
+      // (реализация login() уже выше)
+      // Скрывает форму входа
+
+      function hideLogin() {
+        document.getElementById("login-form").style.display = "none";
+      }
+      // Функция для отправки данных регистрации на сервер
+      // Она берёт значения из полей формы регистрации и отправляет их на сервер
+      function submitRegister() {
+        const username = document.getElementById("reg-username").value;
+        const password = document.getElementById("reg-password").value;
+
+        fetch(`${baseUrl}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success || data.token) {
+              alert("Регистрация успешна!");
+              hideRegister();
+            } else {
+              alert("Ошибка регистрации");
+            }
+          })
+          .catch((err) => {
+            console.error("Ошибка регистрации:", err);
+            alert("Ошибка регистрации");
+          });
+      }
+
+      // (реализация register() уже выше)
+
+      function hideRegister() {
+        document.getElementById("register-form").style.display = "none";
+      }
+
+      function hideAuthForms() {
+        hideLogin();
+        hideRegister();
+      }
+
+      // Обработчик кнопки "Выйти" - скрывает информацию о пользователе и очищает сессию
+      document.getElementById("logout-button").addEventListener("click", () => {
+        hideUserInfo();
+        alert("Вы вышли из системы");
+      });
+    </script>
+  </body>
+</html>
