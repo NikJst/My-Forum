@@ -74,7 +74,8 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(System.Net.IPAddress.Loopback, 5000); // фиксированный порт 5000
 }); 
-
+//builder.WebHost.UseKestrel(options => options.ListenAnyIP(5000)); // или любой IP
+builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable("PORT") ?? "5000"));
 var app = builder.Build();
 
 // // Middleware
