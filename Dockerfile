@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . ./
 
 # Публикуем в папку out
-RUN dotnet publish -c Release -o out
+RUN dotnet publish ForumBackend.csproj -c Release -o /app/out
 
 # Этап запуска
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
