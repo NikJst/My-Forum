@@ -96,6 +96,8 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ForumHub>("/forumHub");// Регистрация хаба SignalR
 
+app.MapGet("/", () => "Сервер работает!");
+
 //====
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -113,5 +115,4 @@ app.Lifetime.ApplicationStarted.Register(() =>
 //     context.Response.Redirect("/swagger");
 //     return Task.CompletedTask;
 // });
-
 app.Run();
