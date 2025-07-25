@@ -100,7 +100,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ForumHub>("/forumHub");// Регистрация хаба SignalR
 
-app.MapGet("/", () => "Сервер работает!");
+
 
 //====
 app.Lifetime.ApplicationStarted.Register(() =>
