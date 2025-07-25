@@ -17,4 +17,4 @@ COPY --from=build /app/out .
 EXPOSE 80
 
 # Указываем команду запуска
-ENTRYPOINT ["dotnet", "ForumBackend.csproj"]
+ENTRYPOINT ["dotnet", "ForumBackend.dll"]
