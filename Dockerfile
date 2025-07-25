@@ -14,7 +14,10 @@ WORKDIR /app
 COPY --from=build /app/out .
 
 # Указываем порт
-EXPOSE 80
+EXPOSE 8080
+
+# Указываем переменную окружения для URL
+ENV ASPNETCORE_URLS=http://+:8080
 
 # Указываем команду запуска
 ENTRYPOINT ["dotnet", "ForumBackend.dll"]

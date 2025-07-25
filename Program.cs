@@ -7,8 +7,8 @@ using ForumBackend.Hubs;
 using ForumBackend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable("PORT") ?? "5000"));
-
+builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable("PORT") ?? "5001"));
+// builder.WebHost.UseUrls("http://localhost:5001");
 
 // Подключение базы данных
 builder.Services.AddDbContext<ForumContext>(options =>
