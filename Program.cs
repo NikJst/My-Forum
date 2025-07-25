@@ -108,10 +108,10 @@ app.Lifetime.ApplicationStarted.Register(() =>
 
 
 // // Перенаправление корневого URL на Swagger
-app.MapGet("/", context =>
-{
-    context.Response.Redirect("/swagger");
-    return Task.CompletedTask;
-});
+// app.MapGet("/", context =>
+// {
+//     context.Response.Redirect("/swagger");
+//     return Task.CompletedTask;
+// });
 
 app.Run();
