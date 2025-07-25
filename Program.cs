@@ -72,11 +72,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSignalR();
 
 // Настройка CORS
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.Listen(System.Net.IPAddress.Loopback, 5000); // фиксированный порт 5000
-}); 
-//builder.WebHost.UseKestrel(options => options.ListenAnyIP(5000)); // или любой IP
+// builder.WebHost.ConfigureKestrel(options =>
+// {
+//     options.Listen(System.Net.IPAddress.Loopback, 5000); // фиксированный порт 5000
+// }); 
+// builder.WebHost.UseKestrel(options => options.ListenAnyIP(5000)); // или любой IP
 var app = builder.Build();
 
 // // Middleware
