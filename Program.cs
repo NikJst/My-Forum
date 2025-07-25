@@ -114,5 +114,5 @@ app.MapGet("/", context =>
     return Task.CompletedTask;
 });
 
-
+app.MapGet("/", () => "Hello, world!");
 app.Run();
