@@ -72,9 +72,11 @@ public class ForumHub : Hub
     // Удаляем все подключения пользователя к темам
     // и обновляем количество пользователей в темах
     public override async Task OnDisconnectedAsync(Exception? exception)
-    {
+    {// Удаляем все подключения пользователя к темам
+     // Получаем идентификатор пользователя или соединения
         var user = Context.UserIdentifier ?? Context.ConnectionId;
-
+        // Ищем все подключения пользователя к темам
+        // и удаляем их из базы данных чтобы не было фантомных подключений
         var connections = _context.ThreadConnections
             .Where(tc => tc.UserId == user);
 
