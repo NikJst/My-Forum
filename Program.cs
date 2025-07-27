@@ -57,11 +57,6 @@ builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable(
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ForumContext>();
-    db.Database.Migrate();
-}
 
 app.MapControllers();
 
