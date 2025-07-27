@@ -2,7 +2,7 @@ public class Post
 {
     public int Id { get; set; }
     public string Content { get; set; } = null!;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public int ThreadId { get; set; }
     public ForumThread Thread { get; set; } = null!;
