@@ -57,6 +57,8 @@ builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable(
 
 var app = builder.Build();
 
+app.MapControllers();
+
 // минимальный ответ для корня
 app.MapGet("/", () => "Сервер работает!");
 
