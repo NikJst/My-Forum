@@ -7,8 +7,10 @@ using ForumBackend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ForumContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -61,4 +63,9 @@ app.MapGet("/", () => "Сервер работает!");
 // выводим явный маркер готовности
 Console.WriteLine(">>>>> Приложение готово к запуску <<<<<");
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ForumContext>();
+    dbContext.Database.Migrate();
+}
 app.Run();
