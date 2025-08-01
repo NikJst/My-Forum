@@ -1,23 +1,21 @@
-# Этап сборки
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
-
-# Копируем проект в контейнер
+# ---------- ЭТАП 1: СБОРКА ПРОЕКТА ----------
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build   
+WORKDIR /app                                     
+# Копируем только файлы проекта для восстановления зависимостей
+COPY ForumBackend.csproj ./
+# Восстанавливаем зависимости внутри контейнера
+RUN dotnet restore
+# Копируем все остальные файлы проекта
 COPY . ./
-
-# Публикуем в папку out
+# Публикуем проект в режиме Release
+# Эта команда создаст скомпилированную версию в папке /app/out
 RUN dotnet publish ForumBackend.csproj -c Release -o /app/out
-
-# Этап запуска
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-WORKDIR /app
+# ---------- ЭТАП 2: ЗАПУСК СКОМПИЛИРОВАННОГО ПРИЛОЖЕНИЯ ----------
+FROM mcr.microsoft.com/dotnet/aspnet:8.0         
+WORKDIR /app                                     
+# Копируем результат сборки из предыдущего этапа
 COPY --from=build /app/out/ .
-
-# Указываем порт
+# Открываем порт (необязательно, но полезно для локального проброса)
 EXPOSE 8080
-
-# Указываем переменную окружения для URL
-ENV ASPNETCORE_URLS=http://+:10000
-
-# Указываем команду запуска
+# Основная команда запуска
 ENTRYPOINT ["dotnet", "ForumBackend.dll"]

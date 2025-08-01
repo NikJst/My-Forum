@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  app:
+    build: . # Собрать образ приложения из Dockerfile в текущей папке
+    container_name: app
+    ports:
+      - "8000:8000" # Проброс порта
+    depends_on:
+      - postgres # Ждём, зависимотсей - пока БД запустится
+    environment: # окружение
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8000
+      - ConnectionStrings__DefaultConnection=Host=forum_postgres;Port=5432;Username=forumuser;Password=forumpassword;Database=forumdb
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: forumuser
+      POSTGRES_PASSWORD: forumpassword
+      POSTGRES_DB: forumdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

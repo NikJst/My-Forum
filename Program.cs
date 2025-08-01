@@ -7,11 +7,10 @@ using ForumBackend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<ForumContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+    
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -50,18 +49,62 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-// слушаем внешний порт, который задаёт Render
-builder.WebHost.UseUrls("http://0.0.0.0:" + (Environment.GetEnvironmentVariable("PORT") ?? "5001"));
+// слушаем внешний порт
+builder.WebHost.UseUrls("http://+:8000");
 
 // … все ваши сервисы …
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "super_secret_key_123!"; // или в appsettings
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ForumBackend";
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+//
+builder.Services.AddSignalR();
+
+//==========>
 var app = builder.Build();
+app.UseSwagger();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+app.MapHub<ForumHub>("/forumHub");// Регистрация хаба SignalR
+
+
+
+if (app.Environment.IsDevelopment() || true) // 👈 можно убрать `|| true` позже
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Forum API v1");
+        options.RoutePrefix = "swagger"; // чтобы Swagger был по адресу /swagger
+    });
+}
 
 app.MapControllers();
 
 // минимальный ответ для корня
-app.MapGet("/", () => "Сервер работает!");
+
 
 // выводим явный маркер готовности
 Console.WriteLine(">>>>> Приложение готово к запуску <<<<<");
