@@ -1,0 +1,41 @@
+<header>
+  <div
+    style="
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    "
+  >
+    <input
+      type="text"
+      id="username"
+      placeholder="Имя пользователя"
+      style="
+        padding: 6px;
+        border-radius: 4px;
+        border: none;
+        background-color: rgb(31, 31, 31);
+        color: white;
+      "
+    />
+    <input
+      type="password"
+      id="password"
+      placeholder="Пароль"
+      style="
+        padding: 6px;
+        border-radius: 4px;
+        border: none;
+        background-color: rgb(31, 31, 31);
+        color: white;
+      "
+    />
+    <div id="auth-buttons" style="display: flex; gap: 10px">
+      <button id="login-button">Войти</button>
+      <button id="register-button">Регистрация</button>
+      <button onclick="hideAuthForms()">Отмена</button>
+    </div>
+  </div>
+</header>

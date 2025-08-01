@@ -8,48 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   </head>
   <body>
-    <header>
-      <div
-        style="
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-bottom: 10px;
-          align-items: center;
-        "
-      >
-        <input
-          type="text"
-          id="username"
-          placeholder="Имя пользователя"
-          style="
-            padding: 6px;
-            border-radius: 4px;
-            border: none;
-            background-color: rgb(31, 31, 31);
-            color: white;
-          "
-        />
-        <input
-          type="password"
-          id="password"
-          placeholder="Пароль"
-          style="
-            padding: 6px;
-            border-radius: 4px;
-            border: none;
-            background-color: rgb(31, 31, 31);
-            color: white;
-          "
-        />
-        <div id="auth-buttons" style="display: flex; gap: 10px">
-          <button id="login-button">Войти</button>
-          <button id="register-button">Регистрация</button>
-          <button onclick="hideAuthForms()">Отмена</button>
-        </div>
-      </div>
-    </header>
-
+    <div id="auth-header-container"></div>
     <main style="display: flex">
       <!-- Блок для отображения информации о вошедшем пользователе -->
       <div
@@ -411,6 +370,7 @@
             threadDropdown.appendChild(el);
           });
         }
+
         // Позиционируем под полем поиска
         const searchInput = document.getElementById("thread-search");
         const rect = searchInput.getBoundingClientRect();
@@ -656,6 +616,33 @@
         hideUserInfo();
         alert("Вы вышли из системы");
       });
+    </script>
+
+    <script>
+      fetch("auth-header.html")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              "Ошибка загрузки auth-header.html: " + response.status
+            );
+          }
+          return response.text();
+        })
+        .then((html) => {
+          document.getElementById("auth-header-container").innerHTML = html;
+          const loginButton = document.getElementById("login-button");
+          if (loginButton) {
+            loginButton.addEventListener("click", submitLogin);
+          }
+
+          const registerButton = document.getElementById("register-button");
+          if (registerButton) {
+            registerButton.addEventListener("click", register);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     </script>
   </body>
 </html>
