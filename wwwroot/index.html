@@ -43,20 +43,6 @@
           Выйти
         </button>
       </div>
-      <div id="register-form" style="display: none; margin-bottom: 20px">
-        <input type="text" id="reg-username" placeholder="Имя пользователя" />
-        <div
-          style="
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 10px;
-          "
-        >
-          <input type="password" id="reg-password" placeholder="Пароль" />
-          <button onclick="submitRegister()">Зарегистрироваться</button>
-        </div>
-      </div>
       <div id="login-form" style="display: none; margin-bottom: 20px">
         <input type="text" id="username" placeholder="Имя пользователя" />
         <div
@@ -71,6 +57,8 @@
           <button onclick="submitLogin()">Войти</button>
         </div>
       </div>
+
+      <div id="auth-forms-container"></div>
 
       <div style="flex-grow: 1; padding: 20px">
         <div
@@ -610,12 +598,35 @@
         hideLogin();
         hideRegister();
       }
-
-      // Обработчик кнопки "Выйти" - скрывает информацию о пользователе и очищает сессию
-      document.getElementById("logout-button").addEventListener("click", () => {
-        hideUserInfo();
-        alert("Вы вышли из системы");
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const logoutBtn = document.getElementById("logout-button");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", () => {
+            hideUserInfo();
+            alert("Вы вышли из системы");
+          });
+        }
       });
+    </script>
+
+    <script>
+      fetch("auth-forms.html")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              "Ошибка загрузки auth-forms.html: " + response.status
+            );
+          }
+          return response.text();
+        })
+        .then((html) => {
+          document.getElementById("auth-forms-container").innerHTML = html;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     </script>
 
     <script>
