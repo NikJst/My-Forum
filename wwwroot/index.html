@@ -183,7 +183,7 @@
           cursor: default;
         "
       >
-        Вы вошли как: <span id="user-name"></span>
+        <span id="user-name"></span>
         <button
           id="logout-button"
           style="
@@ -318,6 +318,7 @@
         if (threadId) {
           joinThread(threadId);
         }
+        renderVisitedThreads();
       };
 
       // Отключаем переходы по ссылкам веток и всегда используем threadId = "1"
@@ -404,26 +405,45 @@
           return;
         }
 
-        visited.forEach((thread) => {
-          const li = document.createElement("li");
-          li.textContent = thread.title;
-          li.style.cursor = "pointer";
-          li.style.padding = "6px 8px";
-          li.style.borderBottom = "1px solid #444";
+        visited.forEach((thread, index) => {
+          const container = document.createElement("span");
 
-          li.addEventListener("click", () => {
+          const titleSpan = document.createElement("span");
+          titleSpan.textContent = thread.title;
+          titleSpan.style.cursor = "pointer";
+          titleSpan.style.marginRight = "4px";
+          titleSpan.addEventListener("click", () => {
             joinThread(thread.id.toString());
           });
-
-          li.addEventListener("mouseenter", () => {
-            li.style.backgroundColor = "#333";
+          titleSpan.addEventListener("mouseenter", () => {
+            titleSpan.style.textDecoration = "underline";
+          });
+          titleSpan.addEventListener("mouseleave", () => {
+            titleSpan.style.textDecoration = "none";
           });
 
-          li.addEventListener("mouseleave", () => {
-            li.style.backgroundColor = "";
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "✕";
+          deleteBtn.title = "Удалить из истории";
+          deleteBtn.style.marginRight = "8px";
+          deleteBtn.style.background = "transparent";
+          deleteBtn.style.border = "none";
+          deleteBtn.style.color = "#f44";
+          deleteBtn.style.cursor = "pointer";
+          deleteBtn.addEventListener("click", () => {
+            visited.splice(index, 1);
+            localStorage.setItem("visitedThreads", JSON.stringify(visited));
+            renderVisitedThreads();
           });
 
-          visitedList.appendChild(li);
+          container.appendChild(titleSpan);
+          container.appendChild(deleteBtn);
+
+          visitedList.appendChild(container);
+
+          if (index !== visited.length - 1) {
+            visitedList.appendChild(document.createTextNode(", "));
+          }
         });
       }
 
