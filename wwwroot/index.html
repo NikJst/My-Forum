@@ -215,60 +215,67 @@
         </div>
       </div>
 
-      <aside id="sidebar">
-        <h3 style="color: white">Ветки</h3>
-        <ul style="list-style: none; padding: 0"></ul>
-        <div style="margin-top: 20px">
-          <input
-            type="text"
-            id="new-thread-name"
-            placeholder="Название ветки"
-            style="padding: 5px; width: 100%"
-          />
-          <button onclick="createThread()" style="margin-top: 6px; width: 100%">
-            Создать ветку
-          </button>
-        </div>
-      </aside>
       <div style="flex-grow: 1; padding: 20px">
-        <section id="messages-container">
-          <div
-            id="messages"
-            style="
-              border: 3px solid rgb(31, 31, 31);
-              height: 200px;
-              overflow-y: auto;
-              padding: 8px;
-              background-color: rgb(31, 31, 31);
-              border-radius: 24px;
-            "
-          ></div>
-        </section>
-
-        <section id="form-container" style="margin-top: 10px">
+        <div
+          id="search-area"
+          style="
+            margin: 20px auto;
+            width: 80%;
+            display: flex;
+            justify-content: center;
+          "
+        >
           <input
             type="text"
-            id="input"
-            placeholder="Введите сообщение..."
-            style="width: 70%; padding: 5px"
+            id="thread-search"
+            placeholder="Поиск тем..."
+            style="
+              width: 100%;
+              padding: 20px;
+              font-size: 18px;
+              border-radius: 12px;
+              border: 2px solid #ccc;
+            "
           />
-          <button onclick="sendMessage()" style="padding: 5px 10px">
-            Отправить
-          </button>
-        </section>
+        </div>
+        <div id="chat-area" style="display: none">
+          <section id="messages-container">
+            <div
+              id="messages"
+              style="
+                border: 3px solid rgb(31, 31, 31);
+                height: 200px;
+                overflow-y: auto;
+                padding: 8px;
+                background-color: rgb(31, 31, 31);
+                border-radius: 24px;
+              "
+            ></div>
+          </section>
+          <section id="form-container">
+            <input
+              type="text"
+              id="input"
+              placeholder="Введите сообщение..."
+              style="width: 70%; padding: 5px"
+            />
+            <button onclick="sendMessage()" style="padding: 5px 10px">
+              Отправить
+            </button>
+          </section>
+        </div>
       </div>
     </main>
 
     <script>
       // При загрузке страницы проверяем, есть ли сохранённый пользователь и токен, и показываем информацию о пользователе
       window.onload = () => {
+        document.getElementById("chat-area").style.display = "none";
         const savedUsername = localStorage.getItem("username");
         const savedToken = localStorage.getItem("token");
         if (savedUsername && savedToken) {
           showUserInfo(savedUsername);
         }
-        // loadThreads() больше не выделяет активную ветку автоматически
-        loadThreads();
         // Если есть параметр thread в URL, присоединяемся к этой ветке
         const urlParams = new URLSearchParams(window.location.search);
         threadId = urlParams.get("thread") || null;
@@ -282,7 +289,8 @@
       // });
       let threadId = null;
 
-      let links = document.querySelectorAll("#sidebar ul li a");
+      // Глобальная переменная для всех веток
+      let allThreads = [];
 
       function joinThread(newThreadId) {
         if (threadId === newThreadId) return;
@@ -290,6 +298,8 @@
         connection.invoke("LeaveThread", threadId).catch(() => {});
 
         threadId = newThreadId;
+        document.getElementById("chat-area").style.display = "block";
+        document.getElementById("search-area").style.display = "flex";
 
         const messagesDiv = document.getElementById("messages");
         // Очищаем интерфейс сообщений перед загрузкой новой ветки
@@ -313,70 +323,14 @@
           });
 
         connection.invoke("JoinThread", threadId).catch(console.error);
-
-        links.forEach((link) => {
-          const hrefThread = link.getAttribute("href").replace("?thread=", "");
-          if (hrefThread === threadId) {
-            link.classList.add("active");
-          } else {
-            link.classList.remove("active");
-          }
-        });
       }
-
-      // // Изначально выставляем активный класс для первой ветки
-      // links.forEach(link => {
-      //   const href = link.getAttribute('href');
-      //   const hrefThread = href && href.startsWith('?thread=') ? href.replace('?thread=', '') : null;
-      //   if (hrefThread === threadId) {
-      //     link.classList.add('active');
-      //   }
-      // });
-
-      links.forEach((link) => {
-        link.addEventListener("click", (e) => {
-          e.preventDefault();
-          const href = link.getAttribute("href");
-          if (href && href.startsWith("?thread=")) {
-            const newThreadId = href.replace("?thread=", "");
-            joinThread(newThreadId);
-          }
-        });
-      });
 
       const baseUrl = window.location.origin;
 
-      function createThread() {
-        const threadNameInput = document.getElementById("new-thread-name");
-        const title = threadNameInput.value.trim();
-        if (!title) return alert("Введите название ветки");
-
-        fetch(`${baseUrl}/api/threads`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-          body: JSON.stringify({ title }),
-        })
-          .then((res) => {
-            if (!res.ok) {
-              throw new Error("Ошибка при создании ветки");
-            }
-            return res.json();
-          })
-          .then(() => {
-            threadNameInput.value = "";
-            loadThreads(); // обновим список веток
-          })
-          .catch((err) => {
-            console.error("Ошибка создания ветки:", err);
-            alert("Ошибка при создании ветки");
-          });
-      }
+      // createThread функция больше не используется, т.к. sidebar удалён
 
       function loadThreads() {
-        //  loadThreads запрашивает у сервера список всех веток, которые сохранены в базе данных.
+        // Получить список всех веток и сохранить в allThreads
         const token = localStorage.getItem("token");
         fetch(`${baseUrl}/api/threads`, {
           headers: {
@@ -388,30 +342,118 @@
             return res.json();
           })
           .then((threads) => {
-            const ul = document.querySelector("#sidebar ul");
-            ul.innerHTML = ""; // очистить текущий список
-            threads.forEach((thread) => {
-              const li = document.createElement("li");
-              li.id = `branch-${thread.id}`;
-              const a = document.createElement("a");
-              a.href = `?thread=${thread.id}`;
-              a.textContent = thread.title;
-              a.dataset.originalTitle = thread.title;
-              a.addEventListener("click", (e) => {
-                e.preventDefault();
-                joinThread(thread.id.toString());
-              });
-              li.appendChild(a);
-              ul.appendChild(li);
-            });
-            // Обновляем ссылки
-            links = document.querySelectorAll("#sidebar ul li a");
+            allThreads = threads;
           })
           .catch((err) => {
             console.error(err);
             alert("Не удалось загрузить ветки");
           });
       }
+
+      // Поиск и выпадающий список веток
+      // Создаём выпадающий div для списка веток, если не существует
+      let threadDropdown = null;
+      function ensureThreadDropdown() {
+        if (!threadDropdown) {
+          threadDropdown = document.createElement("div");
+          threadDropdown.id = "thread-dropdown";
+          threadDropdown.style.position = "absolute";
+          threadDropdown.style.background = "#222";
+          threadDropdown.style.color = "#fff";
+          threadDropdown.style.border = "1px solid #444";
+          threadDropdown.style.borderRadius = "8px";
+          threadDropdown.style.zIndex = "1000";
+          threadDropdown.style.width = "80%";
+          threadDropdown.style.left = "10%";
+          threadDropdown.style.top = "70px";
+          threadDropdown.style.maxHeight = "250px";
+          threadDropdown.style.overflowY = "auto";
+          threadDropdown.style.display = "none";
+          threadDropdown.style.boxShadow = "0 4px 16px rgba(0,0,0,0.4)";
+          document.body.appendChild(threadDropdown);
+        }
+      }
+
+      // Показывает выпадающий список веток
+      function showThreadDropdown(threads) {
+        ensureThreadDropdown();
+        threadDropdown.innerHTML = "";
+        if (threads.length === 0) {
+          const empty = document.createElement("div");
+          empty.textContent = "Нет совпадений";
+          empty.style.padding = "10px";
+          threadDropdown.appendChild(empty);
+        } else {
+          threads.forEach((thread) => {
+            const el = document.createElement("div");
+            el.textContent = thread.title;
+            el.style.padding = "10px";
+            el.style.cursor = "pointer";
+            el.addEventListener("click", () => {
+              joinThread(thread.id.toString());
+              hideThreadDropdown();
+            });
+            el.addEventListener("mouseover", () => {
+              el.style.background = "#444";
+            });
+            el.addEventListener("mouseout", () => {
+              el.style.background = "";
+            });
+            threadDropdown.appendChild(el);
+          });
+        }
+        // Позиционируем под полем поиска
+        const searchInput = document.getElementById("thread-search");
+        const rect = searchInput.getBoundingClientRect();
+        threadDropdown.style.top = window.scrollY + rect.bottom + "px";
+        threadDropdown.style.left = window.scrollX + rect.left + "px";
+        threadDropdown.style.width = rect.width + "px";
+        threadDropdown.style.display = "block";
+      }
+
+      function hideThreadDropdown() {
+        ensureThreadDropdown();
+        threadDropdown.style.display = "none";
+      }
+
+      // Обработчик поиска по веткам
+      document.addEventListener("DOMContentLoaded", () => {
+        ensureThreadDropdown();
+        // Загрузить ветки при первом открытии поиска
+        loadThreads();
+        const searchInput = document.getElementById("thread-search");
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.trim().toLowerCase();
+          if (!query) {
+            hideThreadDropdown();
+            return;
+          }
+          const filtered = allThreads.filter((t) =>
+            t.title.toLowerCase().includes(query)
+          );
+          showThreadDropdown(filtered);
+        });
+        // Скрывать dropdown при клике вне
+        document.addEventListener("click", (e) => {
+          if (
+            threadDropdown &&
+            !threadDropdown.contains(e.target) &&
+            e.target.id !== "thread-search"
+          ) {
+            hideThreadDropdown();
+          }
+        });
+        // Показывать поиск снова при фокусе
+        searchInput.addEventListener("focus", () => {
+          if (searchInput.value.trim()) {
+            const query = searchInput.value.trim().toLowerCase();
+            const filtered = allThreads.filter((t) =>
+              t.title.toLowerCase().includes(query)
+            );
+            showThreadDropdown(filtered);
+          }
+        });
+      });
 
       const connection = new signalR.HubConnectionBuilder() //Эта строка создаёт “канал связи” между браузером и сервером.
         .withUrl(`${baseUrl}/forumHub`)
@@ -435,16 +477,7 @@
       });
 
       // Обработчик события обновления количества пользователей в ветке
-      connection.on("UpdateUserCount", (threadIdUpdated, userCount) => {
-        const link = document.querySelector(`#branch-${threadIdUpdated} a`);
-        if (link && link.dataset.originalTitle === undefined) {
-          link.dataset.originalTitle = link.textContent;
-        }
-        if (link) {
-          const original = link.dataset.originalTitle;
-          link.textContent = `${original} - ${userCount}`;
-        }
-      });
+      // (sidebar удалён, поэтому обновлять ничего не надо)
 
       connection //Когда ты вызываешь connection.start(), браузер открывает WebSocket, подключается к /forumHub — твой ForumHub.cs в C#
         .start()
