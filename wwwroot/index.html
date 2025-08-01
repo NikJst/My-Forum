@@ -136,13 +136,25 @@
           type="text"
           id="username"
           placeholder="Имя пользователя"
-          style="padding: 6px; border-radius: 4px; border: 1px solid #ccc"
+          style="
+            padding: 6px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgb(31, 31, 31);
+            color: white;
+          "
         />
         <input
           type="password"
           id="password"
           placeholder="Пароль"
-          style="padding: 6px; border-radius: 4px; border: 1px solid #ccc"
+          style="
+            padding: 6px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgb(31, 31, 31);
+            color: white;
+          "
         />
         <div id="auth-buttons" style="display: flex; gap: 10px">
           <button id="login-button">Войти</button>
@@ -234,10 +246,31 @@
               padding: 20px;
               font-size: 18px;
               border-radius: 12px;
-              border: 2px solid #ccc;
+              border: none;
+              background-color: rgb(31, 31, 31);
+              color: white;
             "
           />
         </div>
+
+        <div
+          id="visited-threads"
+          style="width: 80%; margin: 10px auto; color: white"
+        >
+          <h3>Последние посещённые темы:</h3>
+          <ul id="visited-list" style="list-style: none; padding-left: 0"></ul>
+        </div>
+
+        <div
+          id="thread-title"
+          style="
+            margin: 12px auto 0 auto;
+            width: 80%;
+            text-align: center;
+            font-size: 20px;
+            color: white;
+          "
+        ></div>
         <div id="chat-area" style="display: none">
           <section id="messages-container">
             <div
@@ -279,6 +312,12 @@
         // Если есть параметр thread в URL, присоединяемся к этой ветке
         const urlParams = new URLSearchParams(window.location.search);
         threadId = urlParams.get("thread") || null;
+        if (!threadId) {
+          threadId = localStorage.getItem("lastThreadId");
+        }
+        if (threadId) {
+          joinThread(threadId);
+        }
       };
 
       // Отключаем переходы по ссылкам веток и всегда используем threadId = "1"
@@ -302,6 +341,13 @@
         document.getElementById("search-area").style.display = "flex";
 
         const messagesDiv = document.getElementById("messages");
+        const currentThread = allThreads.find(
+          (t) => t.id.toString() === newThreadId
+        );
+        if (currentThread) {
+          addToVisitedThreads(currentThread);
+          renderVisitedThreads();
+        }
         // Очищаем интерфейс сообщений перед загрузкой новой ветки
         messagesDiv.innerHTML = "";
 
@@ -323,6 +369,62 @@
           });
 
         connection.invoke("JoinThread", threadId).catch(console.error);
+        localStorage.setItem("lastThreadId", newThreadId);
+        const threadTitleDiv = document.getElementById("thread-title");
+        threadTitleDiv.textContent = currentThread ? currentThread.title : "";
+      }
+
+      function addToVisitedThreads(thread) {
+        let visited = JSON.parse(
+          localStorage.getItem("visitedThreads") || "[]"
+        );
+
+        // Убираем дубли по id
+        visited = visited.filter((t) => t.id !== thread.id);
+
+        // Добавляем новую ветку в начало
+        visited.unshift(thread);
+
+        // Ограничиваем список, например, до 10
+        if (visited.length > 10) visited.pop();
+
+        localStorage.setItem("visitedThreads", JSON.stringify(visited));
+      }
+
+      function renderVisitedThreads() {
+        const visitedList = document.getElementById("visited-list");
+        visitedList.innerHTML = "";
+
+        const visited = JSON.parse(
+          localStorage.getItem("visitedThreads") || "[]"
+        );
+
+        if (visited.length === 0) {
+          visitedList.innerHTML = "<li>История пуста</li>";
+          return;
+        }
+
+        visited.forEach((thread) => {
+          const li = document.createElement("li");
+          li.textContent = thread.title;
+          li.style.cursor = "pointer";
+          li.style.padding = "6px 8px";
+          li.style.borderBottom = "1px solid #444";
+
+          li.addEventListener("click", () => {
+            joinThread(thread.id.toString());
+          });
+
+          li.addEventListener("mouseenter", () => {
+            li.style.backgroundColor = "#333";
+          });
+
+          li.addEventListener("mouseleave", () => {
+            li.style.backgroundColor = "";
+          });
+
+          visitedList.appendChild(li);
+        });
       }
 
       const baseUrl = window.location.origin;
@@ -392,6 +494,7 @@
             el.addEventListener("click", () => {
               joinThread(thread.id.toString());
               hideThreadDropdown();
+              document.getElementById("thread-search").value = "";
             });
             el.addEventListener("mouseover", () => {
               el.style.background = "#444";
@@ -521,6 +624,15 @@
             console.error("Ошибка при отправке запроса:", err);
           });
       }
+
+      document
+        .getElementById("input")
+        .addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
+          }
+        });
 
       // Этот код добавляет обработчики событий для кнопок "Войти" и "Регистрация"
       document
