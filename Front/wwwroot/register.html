@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        background-color: black;
+        color: white;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: sans-serif;
+      }
+      #register-form {
+        background-color: #1f1f1f;
+        padding: 30px;
+        border-radius: 10px;
+      }
+      input {
+        background-color: black;
+        color: white;
+        border: none;
+        padding: 10px;
+      }
+      button {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="register-form">
+      <h2 style="text-align: center; margin-bottom: 20px">Регистрация</h2>
+      <input type="text" id="reg-username" placeholder="Имя пользователя" />
+      <div
+        style="display: flex; gap: 10px; align-items: center; margin-top: 10px"
+      >
+        <input type="password" id="reg-password" placeholder="Пароль" />
+      </div>
+      <button onclick="submitRegister()" style="margin-top: 15px">
+        Зарегистрироваться
+      </button>
+    </div>
+    <script>
+      function submitRegister() {
+        const username = document.getElementById("reg-username").value;
+        const password = document.getElementById("reg-password").value;
+
+        fetch("api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Ошибка HTTP: " + res.status);
+            return res.json();
+          })
+          .then((data) => {
+            if (data.success || data.token) {
+              window.location.href = "/index.html";
+            } else {
+              alert("Ошибка регистрации");
+            }
+          })
+          .catch((err) => {
+            console.error("Ошибка регистрации:", err);
+            alert("Ошибка регистрации");
+          });
+      }
+      const username = document.getElementById("reg-username").value;
+      const password = document.getElementById("reg-password").value;
+
+      fetch(`${baseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success || data.token) {
+            alert("Регистрация успешна!");
+            hideRegister();
+          } else {
+            alert("Ошибка регистрации");
+          }
+        })
+        .catch((err) => {
+          console.error("Ошибка регистрации:", err);
+          alert("Ошибка регистрации");
+        });
+    </script>
+  </body>
+</html>

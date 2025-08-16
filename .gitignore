@@ -1,0 +1,7 @@
+bin/
+obj/
+out/
+.vscode/
+*.user
+*.db
+forum.db

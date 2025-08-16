@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: . # Корень проекта, Dockerfile лежит здесь
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=forumuser;Password=forumpassword;Database=forumdb
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: forumuser
+      POSTGRES_PASSWORD: forumpassword
+      POSTGRES_DB: forumdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

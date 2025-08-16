@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8" />
+    <title>Форум в реальном времени</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script src="./scripts/auth.js" type="module" defer></script>
+    <script src="./scripts/threads.js" type="module" defer></script>
+    <script src="./scripts/dropdown.js" type="module" defer></script>
+    <script src="./scripts/signalr.js" type="module" defer></script>
+    <script src="./scripts/chat.js" type="module" defer></script>
+    <script src="./scripts/main.js" type="module" defer></script>
+  </head>
+
+  <body>
+    <div id="auth-header-container"></div>
+    <div id="auth-header">
+      <div id="auth-buttons" style="display: flex; gap: 8px">
+        <input id="username" type="text" placeholder="Имя пользователя" />
+        <input id="password" type="password" placeholder="Пароль" />
+        <button id="login-button">Войти</button>
+        <button id="register-button">Регистрация</button>
+      </div>
+
+      <div id="user-info" style="display: none">
+        <span id="user-name"></span>
+        <button id="logout-button">Выйти</button>
+      </div>
+    </div>
+
+    <div id="main-container" style="display: flex; gap: 16px; margin-top: 25vh">
+      <div
+        id="thread-list"
+        style="
+          width: 25%;
+          background-color: #424242;
+          border-radius: 8px;
+          padding: 8px;
+          overflow-y: auto;
+          height: 70vh;
+        "
+      >
+        <!-- Список веток -->
+      </div>
+      <!-- чат -->
+      <div
+        id="chat-area"
+        style="
+          width: 70%;
+          /* border: 1px solid #ccc; */
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          height: 70vh;
+        "
+      >
+        <div
+          id="messages"
+          style="flex-grow: 1; overflow-y: auto; margin-bottom: 8px"
+        ></div>
+
+        <div style="display: flex; gap: 8px">
+          <input
+            type="text"
+            id="input"
+            placeholder="Введите сообщение"
+            style="flex-grow: 1"
+          />
+          <button id="send-btn" onclick="sendMessage()">></button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // При загрузке страницы проверяем, есть ли сохранённый пользователь и токен, и показываем информацию о пользователе
+      document.addEventListener("DOMContentLoaded", () => {
+        // document.getElementById("chat-area").style.display = "none";
+        const savedUsername = localStorage.getItem("username");
+        const savedToken = localStorage.getItem("token");
+        if (savedUsername && savedToken) {
+          showUserInfo(savedUsername);
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const savedUsername = localStorage.getItem("username");
+        const savedToken = localStorage.getItem("token");
+        if (savedUsername && savedToken) {
+          showUserInfo(savedUsername);
+        }
+        initThreads();
+      });
+      // Получаем ID ветки из URL
+      const connection = new signalR.HubConnectionBuilder() //Эта строка создаёт “канал связи” между браузером и сервером.
+        .withUrl("/forumHub")
+        .build();
+
+      //============>   У каждого подключённого клиента заранее настроен приём события:
+      connection.on("ReceivePost", (post) => {
+        const currentUser = localStorage.getItem("username");
+        const isMyMessage = post.author === currentUser;
+        const msg = `${post.author}: ${post.content}`;
+        const div = document.getElementById("messages");
+
+        const messageDiv = document.createElement("div");
+        if (isMyMessage) {
+          messageDiv.classList.add("my-message");
+        }
+        messageDiv.textContent = msg;
+
+        div.appendChild(messageDiv);
+        div.scrollTop = div.scrollHeight;
+      });
+      // Обработчик события обновления количества пользователей в ветке
+      connection //Когда ты вызываешь connection.start(), браузер открывает WebSocket, подключается к /forumHub — твой ForumHub.cs в C#
+        .start()
+        .then(() => {
+          if (threadId) {
+            connection.invoke("JoinThread", threadId);
+          }
+        })
+        .catch((err) => {
+          console.error("Ошибка подключения SignalR:", err);
+        });
+      document
+        .getElementById("register-button")
+        .addEventListener("click", () => {
+          window.location.href = "/register.html";
+        });
+    </script>
+  </body>
+</html>
